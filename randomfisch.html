@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fisch Wheel Code Config</title>
+    <style>
+        body {
+            background-color: #121214;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        h1 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+            font-size: 26px;
+        }
+        p.subtitle {
+            color: #a4b0be;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .wheel-container {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            margin-bottom: 20px;
+        }
+        /* Стрелка указателя */
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #ff4757;
+            z-index: 10;
+            filter: drop-shadow(0px 4px 5px rgba(0,0,0,0.5));
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.7), 0 0 0 12px #2f3542;
+            transition: transform 5s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        .spin-btn {
+            margin-bottom: 35px;
+            padding: 15px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #ff4757, #ff6b81);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+            transition: 0.2s;
+        }
+        .spin-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 20px rgba(255, 71, 87, 0.6);
+        }
+        .spin-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Таблица счетчика улова */
+        .counter-container {
+            width: 100%;
+            max-width: 500px;
+            background: #1e1e24;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid #2f3542;
+        }
+        .counter-title {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 16px;
+            text-align: center;
+            color: #a4b0be;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #2f3542;
+        }
+        th {
+            color: #747d8c;
+            font-weight: 600;
+        }
+        .count-cell {
+            text-align: right;
+            font-weight: bold;
+            font-size: 16px;
+            width: 60px;
+        }
+        .total-row {
+            font-weight: bold;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Всплывающее окно результата */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1e1e24;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.85);
+            z-index: 20;
+            min-width: 280px;
+        }
+        #result-title {
+            font-size: 14px;
+            color: #a4b0be;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #result-fish {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 12px 0 6px 0;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+        #result-rarity {
+            font-size: 15px;
+            color: #ffffff;
+            margin: 0 0 12px 0;
+            font-weight: 500;
+        }
+        #result-location {
+            font-size: 16px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        #result-chance {
+            font-size: 13px;
+            color: #747d8c;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+        #close-btn {
+            padding: 10px 25px;
+            background: #2f3542;
+            border: 1px solid #57606f;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        #close-btn:hover {
+            background: #57606f;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎡 Реалистичное Колесо Fisch</h1>
+    <p class="subtitle">Цвета секторов настраиваются напрямую внутри кода файла!</p>
+
+    <div class="wheel-container">
+        <div class="arrow"></div>
+        <canvas id="wheel" width="600" height="600"></canvas>
+    </div>
+
+    <button class="spin-btn" id="spin">ЗАБРОСИТЬ УДОЧКУ</button>
+
+    <!-- Таблица счетчика улова -->
+    <div class="counter-container">
+        <p class="counter-title">📋 Садок с уловом за сессию</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Рыба</th>
+                    <th>Редкость</th>
+                    <th style="text-align: right;">Поймано</th>
+                </tr>
+            </thead>
+            <tbody id="counter-body"></tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>Всего улова</td>
+                    <td>—</td>
+                    <td id="total-count" style="text-align: right;">0 шт.</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Модалка с результатом -->
+    <div id="result-modal">
+        <p id="result-title">Вы выловили:</p>
+        <div id="result-fish">---</div>
+        <p id="result-rarity">Редкость: --</p>
+        <div id="result-location">📍 Место: --</div>
+        <p id="result-chance">Шанс на колесе: --%</p>
+        <button id="close-btn">Положить в садок</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // НАСТРОЙКА ЦВЕТОВ РЫБ ПРЯМО В КОДЕ НИЖЕ:
+        // Вы можете менять HEX-коды (например, "#2ed573") на любые другие.
+        // ==========================================
+        const COLOR_R    = "#7d97ff"; // Цвет для Marlin (Редкая)
+        const COLOR_E     = "#a30cfa"; // Цвет для Anglerfish (Редкая)
+        const COLOR_GLACIER    = "#26de81"; // Цвет для Glacier Fish (Редкая)
+        
+        const COLOR_HAMMERHEAD = "#ffa502"; // Цвет для Hammerhead Shark (Легендарная)
+        const COLOR_ICESHARK   = "#ff7f50"; // Цвет для Ice Shark (Легендарная)
+        const COLOR_OARFISH     = "#ff6348"; // Цвет для Oarfish (Легендарная)
+        
+        const COLOR_MEGALODON  = "#a55eea"; // Цвет для Megalodon (Мифическая)
+        const COLOR_GHOSTWORM  = "#8854d0"; // Цвет для Ghost Worm Fish (Мифическая)
+        // ==========================================
+
+        // Массив данных рыб, использующий настроенные выше константы цветов
+        const fishes = [
+            { id: "ads", name: "Ancient Depth Serpent", rarity: "Редкая 💎", location: " The Depths(Глубины)", weight: 30, color: COLOR_R, count: 0 },
+            { id: "meg", name: "Megalodon", rarity: "Редкая 💎", location: "Megalodon Hunt(Anciet Isle)", weight: 25, color: COLOR_R, count: 0 },
+            { id: "cr_angler", name: "Crowned Anglerfish", rarity: "Редкая 💎", location: "Abyssal Zenith", weight: 20, color: COLOR_R, count: 0 },
+            { id: "cry_seadragon", name: "Crystallized Seadragon", rarity: "Редкая 💎", location: "Calm Zone", weight: 20, color: COLOR_R, count: 0 },
+            { id: "m_lev", name: "Magma Leviathan", rarity: "Редкая 💎", location: "Volcanic Vents", weight: 20, color: COLOR_R, count: 0 },
+            { id: "fr_lev", name: "Frozen Leviathan", rarity: "Редкая 💎", location: "Challenger's Deep", weight: 20, color: COLOR_R, count: 0 },
+            { id: "gw", name: "Goldwraith", rarity: "Редкая 💎", location: "Crowned Ruins", weight: 15, color: COLOR_R, count: 0 },
+            { id: "omn", name: "Omnithal", rarity: "Редкая 💎", location: "Sunken Reliquary", weight: 15, color: COLOR_R, count: 0 },
+            { id: "plis", name: "Pliosaur", rarity: "Редкая 💎", location: "Collapsed Ruins", weight: 15, color: COLOR_R, count: 0 },
+            { id: "r_titan", name: "Reef Titan", rarity: "Редкая 💎", location: "Coral Bastion", weight: 15, color: COLOR_R, count: 0 },
+            { id: "ww", name: "Wyvern", rarity: "Редкая 💎", location: "Above The Clouds", weight: 15, color: COLOR_R, count: 0 },
+            { id: "oc", name: "Orca", rarity: "Редкая 💎", location: "Orca Hunt", weight: 15, color: COLOR_R, count: 0 },
+            { id: "id", name: "n", rarity: "Эпическая ☀️", location: "loc", weight: 15, color: COLOR_E, count: 0 },
+            { id: "hammerhead", name: "Hammerhead Shark", rarity: "Легендарная 👑", location: "🌊 Ocean (Ночь / Дождь)", weight: 11, color: COLOR_HAMMERHEAD, count: 0 },
+            { id: "iceshark", name: "Ice Shark", rarity: "Легендарная 👑", location: "❄️ Snow Station / Айсберги", weight: 8, color: COLOR_ICESHARK, count: 0 },
+            { id: "oarfish", name: "Oarfish", rarity: "Легендарная 👑", location: "🕳️ Deep Sea (Впадины)", weight: 4.8, color: COLOR_OARFISH, count: 0 },
+            { id: "megalodon", name: "Megalodon", rarity: "Мифическая 🌌", location: "🦈 Океан (Особый ивент)", weight: 0.8, color: COLOR_MEGALODON, count: 0 },
+            { id: "ghostworm", name: "Ghost Worm Fish", rarity: "Мифическая 🌌", location: "🕳️ Deep Sea (Пещеры)", weight: 0.4, color: COLOR_GHOSTWORM, count: 0 }
+        ];
+
+        // Системные переменные
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spin');
+        const modal = document.getElementById('result-modal');
+        const resultFish = document.getElementById('result-fish');
+        const resultRarity = document.getElementById('result-rarity');
+        const resultLocation = document.getElementById('result-location');
+        const resultChance = document.getElementById('result-chance');
+        const closeBtn = document.getElementById('close-btn');
+        const counterBody = document.getElementById('counter-body');
+        const totalCountEl = document.getElementById('total-count');
+
+        const totalWeight = fishes.reduce((sum, f) => sum + f.weight, 0);
+        let currentRotation = 0;
+        let isSpinning = false;
+        let lastWinner = null;
+
+        // Функция обновления таблицы улова
+        function updateCounterTable() {
+            counterBody.innerHTML = "";
+            let totalCaught = 0;
+            
+            fishes.forEach(fish => {
+                totalCaught += fish.count;
+                const row = document.createElement('tr');
+                row.id = `row-${fish.id}`;
+                row.innerHTML = `
+                    <td style="font-weight: bold; color: ${fish.color}">${fish.name}</td>
+                    <td style="color: #a4b0be">${fish.rarity}</td>
+                    <td class="count-cell" id="count-${fish.id}">${fish.count} шт.</td>
+                `;
+                counterBody.appendChild(row);
+            });
+            
+            totalCountEl.innerText = `${totalCaught} шт.`;
+        }
+
+        // Отрисовка колеса на Canvas
+        function drawWheel() {
+            const radius = canvas.width / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let currentAngle = 0;
+
+            for (let i = 0; i < fishes.length; i++) {
+                const fish = fishes[i];
+                const arcAngle = (fish.weight / totalWeight) * (Math.PI * 2);
+                
+                ctx.fillStyle = fish.color;
+                ctx.beginPath();
+                ctx.arc(radius, radius, radius, currentAngle, currentAngle + arcAngle, false);
+                ctx.lineTo(radius, radius);
+                ctx.fill();
+                
+                ctx.strokeStyle = "#2f3542";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                if (fish.weight > 1) {
+                    ctx.save();
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 16px sans-serif";
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = "rgba(0,0,0,0.6)";
+                    ctx.translate(radius, radius);
+                    ctx.rotate(currentAngle + arcAngle / 2);
+                    ctx.textAlign = "right";
+                    ctx.fillText(fish.name, radius - 30, 6);
+                    ctx.restore();
+                } else {
+                    ctx.save();
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 18px sans-serif";
+                    ctx.translate(radius, radius);
+                    ctx.rotate(currentAngle + arcAngle / 2);
+                    ctx.textAlign = "right";
+                    ctx.fillText("🌌", radius - 10, 7);
+                    ctx.restore();
+                }
+                currentAngle += arcAngle;
+            }
+        }
+
+        // Логика запуска вращения
+        spinBtn.addEventListener('click', () => {
+            if (isSpinning) return;
+            isSpinning = true;
+            modal.style.display = 'none';
+
+            const randomPick = Math.random() * totalWeight;
+            let countedWeight = 0;
+            let winningIndex = 0;
+
+            for (let i = 0; i < fishes.length; i++) {
+                countedWeight += fishes[i].weight;
+                if (randomPick <= countedWeight) {
+                    winningIndex = i;
+                    break;
+                }
+            }
+
+            lastWinner = fishes[winningIndex];
+
+            let startAngleDeg = 0;
+            for (let i = 0; i < winningIndex; i++) {
+                startAngleDeg += (fishes[i].weight / totalWeight) * 360;
+            }
+            const sectorWidthDeg = (lastWinner.weight / totalWeight) * 360;
+            const randomPointInSector = startAngleDeg + (Math.random() * (sectorWidthDeg * 0.8) + (sectorWidthDeg * 0.1));
+            const targetRotation = (360 - randomPointInSector + 270) % 360;
+
+            const totalSpinsDegrees = 2160 + targetRotation;
+            const baseRotation = Math.ceil(currentRotation / 360) * 360;
+            currentRotation = baseRotation + totalSpinsDegrees;
+            
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            setTimeout(() => {
+                isSpinning = false;
+                
+                resultFish.innerText = lastWinner.name;
+                resultFish.style.color = lastWinner.color;
+                resultRarity.innerText = `Редкость: ${lastWinner.rarity}`;
+                
+                resultLocation.innerText = `📍 Локация: ${lastWinner.location}`;
+                resultLocation.style.color = lastWinner.color;
+                resultLocation.style.background = `${lastWinner.color}15`;
+                
+                const percentChance = ((lastWinner.weight / totalWeight) * 100).toFixed(2);
+                resultChance.innerText = `Шанс выпадения на колесе: ${percentChance}%`;
+                
+                modal.style.border = `3px solid ${lastWinner.color}`;
+                modal.style.display = 'block';
+            }, 5000);
+        });
+
+        closeBtn.addEventListener('click', () => {
+            if (lastWinner) {
+                lastWinner.count += 1;
+                updateCounterTable();
+                
+                const updatedRow = document.getElementById(`row-${lastWinner.id}`);
+                updatedRow.style.background = `${lastWinner.color}30`;
+                setTimeout(() => {
+                    updatedRow.style.background = 'transparent';
+                }, 800);
+            }
+            modal.style.display = 'none';
+        });
+
+        // Инициализация при первом открытии
+        updateCounterTable();
+        drawWheel();
+    </script>
+</body>
+</html>
