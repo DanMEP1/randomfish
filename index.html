@@ -190,18 +190,17 @@
 <body>
 
     <h1>🎡 Реалистичное Колесо Fisch</h1>
-    <p class="subtitle">Цвета секторов настраиваются напрямую внутри кода файла!</p>
 
     <div class="wheel-container">
         <div class="arrow"></div>
         <canvas id="wheel" width="600" height="600"></canvas>
     </div>
 
-    <button class="spin-btn" id="spin">ЗАБРОСИТЬ УДОЧКУ</button>
+    <button class="spin-btn" id="spin">Выбрать Рандомную рыбу</button>
 
     <!-- Таблица счетчика улова -->
     <div class="counter-container">
-        <p class="counter-title">📋 Садок с уловом за сессию</p>
+        <p class="counter-title">Все рыбы</p>
         <table>
             <thead>
                 <tr>
@@ -223,12 +222,12 @@
 
     <!-- Модалка с результатом -->
     <div id="result-modal">
-        <p id="result-title">Вы выловили:</p>
+        <p id="result-title">Выпало:</p>
         <div id="result-fish">---</div>
         <p id="result-rarity">Редкость: --</p>
         <div id="result-location">📍 Место: --</div>
         <p id="result-chance">Шанс на колесе: --%</p>
-        <button id="close-btn">Положить в садок</button>
+        <button id="close-btn">ОК</button>
     </div>
 
     <script>
@@ -238,14 +237,10 @@
         // ==========================================
         const COLOR_R    = "#7d97ff"; // Цвет для Marlin (Редкая)
         const COLOR_E     = "#a30cfa"; // Цвет для Anglerfish (Редкая)
-        const COLOR_GLACIER    = "#26de81"; // Цвет для Glacier Fish (Редкая)
+        const COLOR_L    = "#fac800"; // Цвет для Glacier Fish (Редкая)
         
-        const COLOR_HAMMERHEAD = "#ffa502"; // Цвет для Hammerhead Shark (Легендарная)
-        const COLOR_ICESHARK   = "#ff7f50"; // Цвет для Ice Shark (Легендарная)
-        const COLOR_OARFISH     = "#ff6348"; // Цвет для Oarfish (Легендарная)
-        
-        const COLOR_MEGALODON  = "#a55eea"; // Цвет для Megalodon (Мифическая)
-        const COLOR_GHOSTWORM  = "#8854d0"; // Цвет для Ghost Worm Fish (Мифическая)
+        const COLOR_M = "#fa0000"; // Цвет для Hammerhead Shark (Легендарная)
+
         // ==========================================
 
         // Массив данных рыб, использующий настроенные выше константы цветов
@@ -256,18 +251,36 @@
             { id: "cry_seadragon", name: "Crystallized Seadragon", rarity: "Редкая 💎", location: "Calm Zone", weight: 20, color: COLOR_R, count: 0 },
             { id: "m_lev", name: "Magma Leviathan", rarity: "Редкая 💎", location: "Volcanic Vents", weight: 20, color: COLOR_R, count: 0 },
             { id: "fr_lev", name: "Frozen Leviathan", rarity: "Редкая 💎", location: "Challenger's Deep", weight: 20, color: COLOR_R, count: 0 },
-            { id: "gw", name: "Goldwraith", rarity: "Редкая 💎", location: "Crowned Ruins", weight: 15, color: COLOR_R, count: 0 },
-            { id: "omn", name: "Omnithal", rarity: "Редкая 💎", location: "Sunken Reliquary", weight: 15, color: COLOR_R, count: 0 },
-            { id: "plis", name: "Pliosaur", rarity: "Редкая 💎", location: "Collapsed Ruins", weight: 15, color: COLOR_R, count: 0 },
-            { id: "r_titan", name: "Reef Titan", rarity: "Редкая 💎", location: "Coral Bastion", weight: 15, color: COLOR_R, count: 0 },
+            { id: "gw", name: "Goldwraith", rarity: "Редкая 💎", location: "Goldwraith Hunt", weight: 15, color: COLOR_R, count: 0 },
+            { id: "omn", name: "Omnithal", rarity: "Редкая 💎", location: "Omnithal Hunt", weight: 15, color: COLOR_R, count: 0 },
+            { id: "plis", name: "Pliosaur", rarity: "Редкая 💎", location: "Pliosaur Hunt", weight: 15, color: COLOR_R, count: 0 },
+            { id: "r_titan", name: "Reef Titan", rarity: "Редкая 💎", location: "Reef Titan Hunt", weight: 15, color: COLOR_R, count: 0 },
+            { id: "bbf", name: "Baby Bloop Fish", rarity: "Редкая 💎", location: "Baby Bloop Hunt", weight: 15, color: COLOR_R, count: 0 },
             { id: "ww", name: "Wyvern", rarity: "Редкая 💎", location: "Above The Clouds", weight: 15, color: COLOR_R, count: 0 },
+            { id: "cbd", name: "Collosal Blue Drahon", rarity: "Редкая 💎", location: "Luminescent Cavern", weight: 15, color: COLOR_R, count: 0 },
+            { id: "cad", name: "Collosal Ancient Dragon", rarity: "Редкая 💎", location: "Crimson Cavern", weight: 15, color: COLOR_R, count: 0 },
             { id: "oc", name: "Orca", rarity: "Редкая 💎", location: "Orca Hunt", weight: 15, color: COLOR_R, count: 0 },
-            { id: "id", name: "n", rarity: "Эпическая ☀️", location: "loc", weight: 15, color: COLOR_E, count: 0 },
-            { id: "hammerhead", name: "Hammerhead Shark", rarity: "Легендарная 👑", location: "🌊 Ocean (Ночь / Дождь)", weight: 11, color: COLOR_HAMMERHEAD, count: 0 },
-            { id: "iceshark", name: "Ice Shark", rarity: "Легендарная 👑", location: "❄️ Snow Station / Айсберги", weight: 8, color: COLOR_ICESHARK, count: 0 },
-            { id: "oarfish", name: "Oarfish", rarity: "Легендарная 👑", location: "🕳️ Deep Sea (Впадины)", weight: 4.8, color: COLOR_OARFISH, count: 0 },
-            { id: "megalodon", name: "Megalodon", rarity: "Мифическая 🌌", location: "🦈 Океан (Особый ивент)", weight: 0.8, color: COLOR_MEGALODON, count: 0 },
-            { id: "ghostworm", name: "Ghost Worm Fish", rarity: "Мифическая 🌌", location: "🕳️ Deep Sea (Пещеры)", weight: 0.4, color: COLOR_GHOSTWORM, count: 0 }
+            { id: "b", name: "Banana", rarity: "Эпическая ☀️", location: "Ancient Isle(Древний остров)", weight: 10, color: COLOR_E, count: 0 },
+            { id: "bss", name: "Blue Sea Slug", rarity: "Эпическая ☀️", location: "Luminescent Cavern", weight: 8, color: COLOR_E, count: 0 },
+            { id: "ced", name: "Colossal Ethereal Dragon", rarity: "Эпическая ☀️", location: "Luminescent Cavern / Crimson cavern", weight: 10, color: COLOR_E, count: 0 },
+            { id: "sc", name: "Scylla", rarity: "Эпическая ☀️", location: "Veil of Forsaken", weight: 10, color: COLOR_E, count: 0 },
+            { id: "mt", name: "Mustard", rarity: "Эпическая ☀️", location: "Ocean", weight: 10, color: COLOR_E, count: 0 },
+            { id: "lp", name: "Long Pike", rarity: "Эпическая ☀️", location: "Ocean", weight: 10, color: COLOR_E, count: 0 },
+            { id: "mn", name: "Manatee", rarity: "Эпическая ☀️", location: "Terrapin Island", weight: 10, color: COLOR_E, count: 0 },
+            { id: "ggs", name: "Great Goldcursed Shark", rarity: "Эпическая ☀️", location: "Castway Clifs", weight: 10, color: COLOR_E, count: 0 },
+            { id: "g_blop", name: "Gem Blobfish", rarity: "Эпическая ☀️", location: "Tresuare Island", weight: 10, color: COLOR_E, count: 0 },
+            { id: "bf", name: "Bloop Fish", rarity: "Легендарные ⭐", location: "Bloop Fish Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "mlr", name: "Mosslurker", rarity: "Легендарные ⭐", location: "Mosslurker Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "nwl", name: "Narwhal", rarity: "Легендарные ⭐", location: "Narwhal Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "crf", name: "Colossus Reef Titan", rarity: "Легендарные ⭐", location: "Colossus Reef Titan Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "agw", name: "Ancient Goldwraith", rarity: "Легендарные ⭐", location: "Ancient Goldwraith Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "aomn", name: "Awakened Omnithal", rarity: "Легендарные ⭐", location: "Awakened Omnithal Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "pf", name: "Profane Leviathann", rarity: "Легендарные ⭐", location: "Cultist Lair", weight: 5, color: COLOR_L, count: 0 },
+            { id: "ap", name: "Ancestral Pliosaur", rarity: "Легендарные ⭐", location: "Ancestral Pliosaur Hunt", weight: 5, color: COLOR_L, count: 0 },
+            { id: "cc", name: "Cataclysm Carp", rarity: "Мифические 🌟", location: "Moosewood", weight: 1, color: COLOR_M, count: 0 },
+            { id: "af", name: "Aetherfin", rarity: "Мифические 🌟", location: "Roslit Bay", weight: 1, color: COLOR_M, count: 0 },
+            { id: "him", name: "Him", rarity: "Мифические 🌟", location: "Везде", weight: 1, color: COLOR_M, count: 0 },
+            { id: "od", name: "Olympian Devil", rarity: "Мифические 🌟", location: "Olympian Fissure", weight: 1, color: COLOR_M, count: 0 },
         ];
 
         // Системные переменные
@@ -346,7 +359,7 @@
                     ctx.translate(radius, radius);
                     ctx.rotate(currentAngle + arcAngle / 2);
                     ctx.textAlign = "right";
-                    ctx.fillText("🌌", radius - 10, 7);
+                    ctx.fillText("", radius - 10, 7);
                     ctx.restore();
                 }
                 currentAngle += arcAngle;
